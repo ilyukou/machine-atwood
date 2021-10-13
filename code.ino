@@ -1,3 +1,8 @@
+// --------------------------------- Импорт сторонних библиотек
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
+
+LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
 // --------------------------------- Задание константных значений
 // Пин кнопки ПУСК
@@ -18,11 +23,16 @@ const String pressStopMessage = "   Press STOP   ";
 // Сообщение: "Результат"
 const String resultMessage = "     Result     ";
 
+// Время ожидания после нажатия кнопки, чтобы убрать дребезг контактов
+const long waitTimeAfterPushButton = 200;
+
 // --------------------------------- Задание переменных значений
 
+// Изначальное состояние реле
+bool defaultRelayState = true;
 
 // Состояние реле.
-int relayState = HIGH;
+int relayState = defaultRelayState;
 
 // Состояние реле digitalRead(relayPin) при котором включается реле.
 int relayOnDigitalRead = LOW;
@@ -35,6 +45,11 @@ void setup() {
 
   pinMode(relayPin, OUTPUT);
 
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(1,0);
+  // Печатает Вступительно сообщение в одну строку
+  lcd.print(welcomeMessage);
 
   Serial.begin(9600);
 }
@@ -43,23 +58,108 @@ void setup() {
 // --------------------------------- Главный цикл
 void loop() {
    
+  // Зажим магнита автоматически после включения
+  setRelayState(defaultRelayState);
 
-    int buttonStartState = digitalRead(buttonStartPin);
-    Serial.println("buttonStartState " + String(buttonStartState));
-    if(buttonStartState  == 0){
-        relayState = HIGH;
-        digitalWrite(relayPin, relayState);
+  while(true){
+    // Проверяем зажата ли кнопка ПУСК. Зажатие == земля.
+    if(digitalRead(buttonStartPin)  == LOW){
+      Serial.println("buttonStartPin НАЖАТА");
+      stopwatch();
+
+      // Печатает Вступительно сообщение в одну строку
+      printMessageInOneLine(welcomeMessage);
     }
+  }
+}
 
-    int buttonStopState = digitalRead(buttonStopPin);
-    Serial.println("buttonStopState " + String(buttonStopState));
-    if(buttonStopState == 0){
-      relayState = LOW;
-        digitalWrite(relayPin, relayState);
+// --------------------------------- Метод секундомера
+void stopwatch(){
+  Serial.println("stopwatch");
+  // Время начала работы секундомера
+  long initTime = millis();
+
+  // Отпустить магнита
+  setRelayState(false);
+
+  // Нажмите СТОП
+  printMessageInOneLine(pressStopMessage);
+
+  // Дребез контактов 
+  delay(waitTimeAfterPushButton);
+
+  Serial.println("stopwatch - start while");
+  while(true){
+
+    // Проверяем состояние кнопки СТОП, в случае её окончания - выходим из счета секундомера
+    if(digitalRead(buttonStopPin)  == LOW){
+      break;
+    }
+    delay(10);
+  }
+  Serial.println("stopwatch - stop while");
+  
+  // Время окончания работы секундомера
+  long resultTime = millis();
+
+  // Зажим магнита
+  setRelayState(true);
+
+  // Время работы секундомера
+  long result = resultTime - initTime;
+
+  // Вывод результата
+  printMessageInTwoLine(resultMessage, convertMillistToString(result));
+
+  // Дребез контактов 
+  delay(waitTimeAfterPushButton);
+
+  while(true){
+
+    // Проверяем состояние кнопки СТОП, в случае её окончания - выходим из метода
+    if(digitalRead(buttonStopPin)  == LOW){
+      break;
+    }
+  }
+}
+
+// --------------------------------- Печать сообщение в две строки
+// firstLine - первая строка; secondLine - вторая строка
+void printMessageInTwoLine(String firstLine, String secondLine){
+  lcd.clear();
+  lcd.setCursor(1,0);
+  lcd.print(firstLine);
+  lcd.setCursor(1,1);
+  lcd.print(secondLine);
+
+  Serial.println("led print; ")
+  Serial.print("firstLine:" + firstLine + "; ");
+  Serial.print("secondLine:" + secondLine);
+}
+
+// --------------------------------- Печать сообщение в одну строку
+void printMessageInOneLine(String firstLine){
+  lcd.clear();
+  lcd.setCursor(1,0);
+  lcd.print(firstLine);
+
+  Serial.println("firstLine:" + firstLine + ";");
+}
+
+// --------------------------------- Управление реле
+void setRelayState(bool state){
+    if (state){
+        digitalWrite(relayPin, HIGH);
+    } else {
+        digitalWrite(relayPin, LOW);
     }
 }
 
-// firstLine - первая строка; secondLine - вторая строка
-void printMessage(String firstLine, String secondLine){
+// --------------------------------- Конвертация времени в строку
+String convertMillistToString(long time){
+  long second = time / 1000000; // 5
+  long millisecond = time - second * 1000000; // 672000
+  millisecond = millisecond / 100; // 6720
 
+  return String(second) + "." + String(millisecond);
 }
