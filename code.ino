@@ -24,7 +24,7 @@ const String pressStopMessage = "   Press STOP   ";
 const String resultMessage = "     Result     ";
 
 // Время ожидания после нажатия кнопки, чтобы убрать дребезг контактов
-const long waitTimeAfterPushButton = 200;
+const long waitTimeAfterPushButton = 300;
 
 // --------------------------------- Задание переменных значений
 
@@ -52,6 +52,7 @@ void setup() {
   lcd.print(welcomeMessage);
 
   Serial.begin(9600);
+  Serial.println(welcomeMessage);
 }
 
 
@@ -60,6 +61,8 @@ void loop() {
    
   // Зажим магнита автоматически после включения
   setRelayState(defaultRelayState);
+
+  Serial.println("before while");
 
   while(true){
     // Проверяем зажата ли кнопка ПУСК. Зажатие == земля.
@@ -75,7 +78,7 @@ void loop() {
 
 // --------------------------------- Метод секундомера
 void stopwatch(){
-  Serial.println("stopwatch");
+  Serial.println("stopwatch start method");
   // Время начала работы секундомера
   long initTime = millis();
 
@@ -121,6 +124,9 @@ void stopwatch(){
       break;
     }
   }
+
+  delay(waitTimeAfterPushButton);
+  Serial.println("stopwatch end method");
 }
 
 // --------------------------------- Печать сообщение в две строки
@@ -132,9 +138,10 @@ void printMessageInTwoLine(String firstLine, String secondLine){
   lcd.setCursor(1,1);
   lcd.print(secondLine);
 
-  Serial.println("led print; ")
+  Serial.println("led print; ");
   Serial.print("firstLine:" + firstLine + "; ");
   Serial.print("secondLine:" + secondLine);
+  Serial.println("");
 }
 
 // --------------------------------- Печать сообщение в одну строку
@@ -148,18 +155,18 @@ void printMessageInOneLine(String firstLine){
 
 // --------------------------------- Управление реле
 void setRelayState(bool state){
+    Serial.println("setRelayState " + String(state));
     if (state){
-        digitalWrite(relayPin, HIGH);
-    } else {
         digitalWrite(relayPin, LOW);
+    } else {
+        digitalWrite(relayPin, HIGH);
     }
 }
 
 // --------------------------------- Конвертация времени в строку
 String convertMillistToString(long time){
-  long second = time / 1000000; // 5
-  long millisecond = time - second * 1000000; // 672000
-  millisecond = millisecond / 100; // 6720
+  long second = time / 1000;
+  long millisecond = time - second * 1000; 
 
-  return String(second) + "." + String(millisecond);
+  return String(second) + "." + String(millisecond) + "s";
 }
