@@ -2,7 +2,10 @@
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
 
-LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+LiquidCrystal_I2C lcd(0x27,20,4);
+// Порты для экранчика
+// SDA	A4
+// SCL	A5
 
 // --------------------------------- Задание константных значений
 // Пин кнопки ПУСК
@@ -33,10 +36,6 @@ bool defaultRelayState = true;
 
 // Состояние реле.
 int relayState = defaultRelayState;
-
-// Состояние реле digitalRead(relayPin) при котором включается реле.
-int relayOnDigitalRead = LOW;
-
 
 // --------------------------------- Настройка
 void setup() {
@@ -70,9 +69,10 @@ void loop() {
       Serial.println("buttonStartPin НАЖАТА");
       stopwatch();
 
-      // Печатает Вступительно сообщение в одну строку
+      // Печатает Вступительно сообщение в одну строку, после окончания работы секундомера
       printMessageInOneLine(welcomeMessage);
     }
+    delay(10);
   }
 }
 
@@ -88,7 +88,7 @@ void stopwatch(){
   // Нажмите СТОП
   printMessageInOneLine(pressStopMessage);
 
-  // Дребез контактов 
+  // Убераем дребез контактов 
   delay(waitTimeAfterPushButton);
 
   Serial.println("stopwatch - start while");
@@ -114,7 +114,7 @@ void stopwatch(){
   // Вывод результата
   printMessageInTwoLine(resultMessage, convertMillistToString(result));
 
-  // Дребез контактов 
+  // Убераем дребез контактов 
   delay(waitTimeAfterPushButton);
 
   while(true){
@@ -123,8 +123,10 @@ void stopwatch(){
     if(digitalRead(buttonStopPin)  == LOW){
       break;
     }
+    delay(10);
   }
 
+  // Убераем дребез контактов 
   delay(waitTimeAfterPushButton);
   Serial.println("stopwatch end method");
 }
