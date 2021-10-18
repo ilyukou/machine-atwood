@@ -17,6 +17,12 @@ const int buttonStopPin = 4;
 // Пин реле
 const int relayPin = 3;
 
+// Пин кнопки ДУ ПУСК - Включает РЕЛЕ
+const int buttonControlStartPin = 6;
+
+// Пин кнопки ДУ СТОП - Выключает РЕЛЕ
+const int buttonControlStopPin = 7;
+
 // Сообщение: "Машина Атвуда"
 const String welcomeMessage = " Atwood machine ";
 
@@ -42,6 +48,9 @@ void setup() {
   pinMode(buttonStartPin, INPUT);
   pinMode(buttonStopPin, INPUT);
 
+  pinMode(buttonControlStartPin, INPUT);
+  pinMode(buttonControlStopPin, INPUT);
+
   pinMode(relayPin, OUTPUT);
 
   lcd.init();
@@ -57,13 +66,6 @@ void setup() {
 
 // --------------------------------- Главный цикл
 void loop() {
-   
-  // Зажим магнита автоматически после включения
-  setRelayState(defaultRelayState);
-
-  Serial.println("before while");
-
-  while(true){
     // Проверяем зажата ли кнопка ПУСК. Зажатие == земля.
     if(digitalRead(buttonStartPin)  == LOW){
       Serial.println("buttonStartPin НАЖАТА");
@@ -72,8 +74,9 @@ void loop() {
       // Печатает Вступительно сообщение в одну строку, после окончания работы секундомера
       printMessageInOneLine(welcomeMessage);
     }
+    // Проверяет кнопки ДУ и изменяет состояние реле
+    controlButtonManagement();
     delay(10);
-  }
 }
 
 // --------------------------------- Метод секундомера
@@ -98,6 +101,8 @@ void stopwatch(){
     if(digitalRead(buttonStopPin)  == LOW){
       break;
     }
+    // Проверяет кнопки ДУ и изменяет состояние реле
+    controlButtonManagement();
     delay(10);
   }
   Serial.println("stopwatch - stop while");
@@ -123,6 +128,8 @@ void stopwatch(){
     if(digitalRead(buttonStopPin)  == LOW){
       break;
     }
+    // Проверяет кнопки ДУ и изменяет состояние реле
+    controlButtonManagement();
     delay(10);
   }
 
@@ -171,4 +178,25 @@ String convertMillistToString(long time){
   long millisecond = time - second * 1000; 
 
   return String(second) + "." + String(millisecond) + "s";
+}
+
+// --------------------------------- Проверка кнопок ДУ и изменение состояние РЕЛЕ
+void controlButtonManagement(){
+  if(digitalRead(buttonControlStartPin)  == LOW){
+    Serial.println("buttonControlStartPin НАЖАТА");
+
+    // Включаем РЕЛЕ
+    setRelayState(true);
+    // Убираем дребезг контактов
+    delay(waitTimeAfterPushButton);
+  }
+
+  if(buttonControlStopPin == LOW){
+    Serial.println("buttonControlStopPin НАЖАТА");
+
+    // Выключаем РЕЛЕ
+    setRelayState(false);
+    // Убираем дребезг контактов
+    delay(waitTimeAfterPushButton);
+  }
 }
