@@ -27,7 +27,7 @@ const int buttonControlStopPin = 7;
 const String welcomeMessage = " Atwood machine ";
 
 // Сообщение: "Нажмите СТОП"
-const String pressStopMessage = "   Press STOP   ";
+const String pressStopMessage = "   HRONOMETR    ";
 
 // Сообщение: "Результат"
 const String resultMessage = "     Result     ";
@@ -66,6 +66,10 @@ void setup() {
 
 // --------------------------------- Главный цикл
 void loop() {
+  // 1. При включении блока на пине  D3 (сигнал управления ЭМ) логический 0 (ЭМ отжат)
+  setRelayState(false);  
+
+  while(true){
     // Проверяем зажата ли кнопка ПУСК. Зажатие == земля.
     if(digitalRead(buttonStartPin)  == LOW){
       Serial.println("buttonStartPin НАЖАТА");
@@ -73,10 +77,11 @@ void loop() {
 
       // Печатает Вступительно сообщение в одну строку, после окончания работы секундомера
       printMessageInOneLine(welcomeMessage);
-    }
+      }
     // Проверяет кнопки ДУ и изменяет состояние реле
     controlButtonManagement();
     delay(10);
+    }    
 }
 
 // --------------------------------- Метод секундомера
@@ -84,10 +89,7 @@ void stopwatch(){
   Serial.println("stopwatch start method");
   // Время начала работы секундомера
   long initTime = millis();
-
-  // Отпустить магнита
-  setRelayState(false);
-
+  
   // Нажмите СТОП
   printMessageInOneLine(pressStopMessage);
 
@@ -189,14 +191,16 @@ void controlButtonManagement(){
     setRelayState(true);
     // Убираем дребезг контактов
     delay(waitTimeAfterPushButton);
+    Serial.println("controlButtonManagement relay true");
   }
 
-  if(buttonControlStopPin == LOW){
+  if(digitalRead(buttonControlStopPin) == LOW){
     Serial.println("buttonControlStopPin НАЖАТА");
 
     // Выключаем РЕЛЕ
     setRelayState(false);
     // Убираем дребезг контактов
     delay(waitTimeAfterPushButton);
+    Serial.println("controlButtonManagement relay false");
   }
 }
